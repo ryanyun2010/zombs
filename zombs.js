@@ -14,28 +14,37 @@ Working 5.control charecters DONE
 10.health DONE
 11.building
 12.multiplier
-13.world shrinks
+13.world 
 14.map DONE
-15.airdops
+15.airdrop
 16.zombies
 */
 /* ADD VARIABLES HERE */
+var gottonweaponbamboo=false;
+var gottonweaponbamboogun=false;
 var canvas = document.querySelector('canvas');
 var tools = canvas.getContext('2d');
 var tile='capture/load/uNqbBknOrI5cDJlxfTJI3tze.png'
+var bamboo=new Weapon({width:100,height:100,image:"http://www.pngmart.com/files/5/Bamboo-Stick-PNG-Pic-279x279.png"})
+var bamboogun=new Weapon({width:60,height:60,image:"https://ryan1.wisen.space/capture/load/fyrsaulbqnc99c_dssov7rhl.png"})
+var inventory=new INVENTORYBAR();
+var gunitem=new INVENTORYITEM("https://ryan1.wisen.space/capture/load/fyrsaulbqnc99c_dssov7rhl.png",2,'gun');
+var bambooitem=new INVENTORYITEM("http://www.pngmart.com/files/5/Bamboo-Stick-PNG-Pic-279x279.png",1,'bamboo');
+var panda= new Character();
 var gameWorld = new World();
-var panda = new Character();
 var bushes = [];
 var crates=[];
 var buildings=[];
 var kits=[];
-var health= new Score(50,50);
+var healthbar= new Bar();
+var health= new Score(50);
 var test=0;
 var g=1;
 var yoffset=-0.3;
 var xoffset=0.39;
 var distancex=0.1;
 var distancey=0.2;
+
 panda.bodyRadius=health.number/4000;
 panda.handRadius=health.number/16000;
 while(bushes.length < 50) {
@@ -43,6 +52,10 @@ while(bushes.length < 50) {
   //  console.log(bushes[bushes.length-1].x,bushes[bushes.length-1].y)
 }
 while(crates.length < 25) {
+    crates.push(new WeaponCrate());
+  //  console.log(bushes[bushes.length-1].x,bushes[bushes.length-1].y)
+}
+while(crates.length < 0) {
     crates.push(new Crate());
   //  console.log(bushes[bushes.length-1].x,bushes[bushes.length-1].y)
 }
@@ -54,19 +67,22 @@ while(buildings.length < 5) {
     buildings.push(new Building());
   //  console.log(bushes[bushes.length-1].x,bushes[bushes.length-1].y)
 }
-var resources=[gameWorld,panda].concat(bushes);
-resources.push(health);
-for(var i=0;i<crates.length;i++){
-resources.push(crates[i]);
+var resources=[gameWorld,panda,bamboo,bamboogun].concat(crates);
+
+
+
+for(var i=0;i<bushes.length;i++){
+resources.push(bushes[i]);
 }
 for(var i=0;i<buildings.length;i++){
 //resources.push(buildings[i]);
 }
 //for(var i=0;i<kits.length;i++){
 //resources.push(kits[i]);
-//}
+resources.push(healthbar);
+resources.push(health);
+resources.push(inventory,bambooitem,gunitem);
 //test=1;
-/* ADD FUNCTIONS HERE */
 function World() {
     this.width = 3;
     this.height = 3;
@@ -171,6 +187,99 @@ if(wallBottom > 0) {
     }
     
 }
+function Bar(){
+    this.draw=function(){
+        tools.fillStyle = 'green';
+        if(health.number<50){
+            tools.fillStyle='red';
+        }
+		tools.fillRect(40, canvas.height-40, health.number*2, 40);
+    }
+    this.move=function(){
+        
+    }
+}
+function Weapon(options) {
+	this.width = options.width;
+	this.height = options.height;
+	this.color = options.color;
+	this.image = new Image();
+	this.imageUrl = options.image;
+	this.projectile = null;
+	this.velocity = {
+		x: 0, y: 0
+	}
+	this.draw = function(cx, cy, cr, angle) {
+	       if(this.velocity.x){
+	           this.velocity.x+=angle*-1.2;
+	           this.velocity.y+=angle*-1.2;
+	           console.log(angle,angle)
+	       }
+	       if(this.projectile) this.projectile.draw(0, -0.8*this.height);
+    this.fire = function() {
+    
+	    if(!this.projectile) return;
+	    this.projectile = null;
+
+    }
+
+		tools.save();
+			this.x = cx+this.velocity.x;
+	this.y = cy+this.velocity.y;
+	this.r = cr;
+	this.angle = angle;
+	
+
+		tools.translate(this.x, this.y);
+		    tools.rotate(angle+Math.PI*2)
+	if(this.image) {
+			tools.drawImage(this.image, -50, cr, this.width, this.height);
+			
+		} else if(this.color) {
+			tools.fillStyle = this.color;
+			tools.fillRect(0, cr, this.width, this.height);
+		}
+		
+		tools.restore();
+	}
+	this.load = function() {
+
+	if(this.projectile) return;
+	
+	this.projectile = new Projectile();
+	console.log(this.projectile)
+
+}
+	this.throw=function(){
+		 this.velocity.x=1;   
+		 console.log("panda")
+		 if(panda.weapon === bamboo){
+		     console.log("panda11111")
+		     gottonweaponbamboo=false;
+		 }else if(panda.weapon === bamboogun){
+		     console.log("panda11112")
+		     gottonweaponbamboogun=false;
+		 }
+	}
+}
+function Projectile() {
+
+	this.radius = 5;
+	this.color = 'orange';
+	
+	this.move = function() {
+		
+	}
+	
+	this.draw = function(x,y) {
+		tools.beginPath();
+		tools.fillStyle = this.color;
+		tools.arc(x, y, this.radius, 0, Math.PI*2);
+		tools.fill();
+		tools.closePath();
+	}
+
+}
 function Bush() {
 
 	this.x = /*1.5*/Math.random()/**1*/*gameWorld.width-0.5;
@@ -207,6 +316,36 @@ function Bush() {
             //this.trans=0;//},0.1)
 	}
 }
+function INVENTORYITEM(image,number,item){
+    this.number=number;
+    this.item=item;
+    this.imageUrl = image;
+	this.image = new Image();
+    this.draw=function(){
+        if(this.item==='bamboo'){
+            if(gottonweaponbamboo){
+                    
+                    tools.drawImage(this.image, (canvas.width/2)+110,canvas.height-30, 30, 30);
+            }
+        }else if(this.item==="gun"){
+         if(gottonweaponbamboogun){
+                    tools.drawImage(this.image, (canvas.width/2)+310,canvas.height-30, 30, 30);
+            }   
+        }
+    }
+    this.move=function(){}
+}
+function INVENTORYBAR(){
+    this.draw=function(){
+        tools.fillStyle="#00ffff";
+        tools.fillRect(canvas.width/2,canvas.height-50,canvas.width/2,50);
+        tools.fillStyle="#000000";
+        tools.fillText("1",canvas.width/2+100,canvas.height-20);
+        tools.fillText("2",canvas.width/2+300,canvas.height-20);
+
+    }
+    this.move=function(){}
+}
 function Crate() {
 
 	this.x = Math.random()*gameWorld.width-0.5;
@@ -230,6 +369,60 @@ function Crate() {
            if(doHitBoxesCollide({x:x,y:y,width:this.width,height:this.height},{x:pandax,y:panday,width:panda.bodyRadius*2*canvas.width,height:panda.bodyRadius*2*canvas.height})){
                 this.height=0;
                 this.width=0;
+                //console.log("touch");
+           }
+           
+           
+    };
+         
+	this.draw = function() {
+        
+    x = (gameWorld.x-this.x)*canvas.width;
+    y = (gameWorld.y-this.y)*canvas.height;
+        //setTimeout(function(){
+            //this.trans=0; var right = this.x - this.bodyRadius*2;
+        var bottom = this.y - this.radius*2;
+        var right = this.x - this.radius*2;
+        if(right < -0.5 || bottom < -0.30 || this.y > 2.5 || this.x >2.5) {//console.log(right);
+        this.width=0;
+        return;};//},0.1)
+        tools.drawImage(this.image, x,y, this.width, this.height);
+	}
+}
+function WeaponCrate() {
+
+	this.x = Math.random()*gameWorld.width-0.5;
+	this.y = Math.random()*gameWorld.height-0.5;
+	this.imageUrl = 'https://ryan1.wisen.space/capture/load/IayJH9Z0iwlXnocWAHe3T870.png';
+	this.image = new Image();
+    this.height=50;
+    this.width=50;
+    this.radius=0.01;
+    var x = (gameWorld.x-this.x)*canvas.width;
+    var y = (gameWorld.y-this.y)*canvas.height;
+	this.move = function () {
+        //  if(absdiff((gameWorld.x-xoffset),this.x)<this.width && absdiff((gameWorld.y-xoffset),this.y)<this.height){
+        //      console.log("touch");
+        //      this.height=0;
+        //      this.width=0;
+        //  }
+
+           var pandax=canvas.width/2-(panda.bodyRadius*canvas.width);
+           var panday=canvas.height/2-(panda.bodyRadius*canvas.height);
+           if(doHitBoxesCollide({x:x,y:y,width:this.width,height:this.height},{x:pandax,y:panday,width:panda.bodyRadius*2*canvas.width,height:panda.bodyRadius*2*canvas.height})){
+                this.height=0;
+                this.width=0;this.radius=0;
+                if(Math.round(Math.random())===1){
+                panda.weapon=bamboogun;
+                gottonweaponbamboogun=true;
+                }else{
+                    panda.weapon=bamboo;
+                    gottonweaponbamboo=true;
+                }
+                panda.weapon.velocity.x=0;
+                panda.weapon.velocity.y=0;
+                panda.weapon.x=panda.leftHand.x;
+                panda.weapon.y=panda.leftHand.y;
                 //console.log("touch");
            }
            
@@ -318,11 +511,15 @@ function Character(){
     this.bodyRadius = 0.035;
     this.handRadius = this.bodyRadius/4;
     this.color = "#ffffff";
-    this.handcolor="black"
+    this.handcolor="black";
     this.outlineColor= "black";
     this.angle=Math.PI / 4;
     this.direction = { x: 0, y: 0, theta: 0 }
     this.health = 100;
+    this.weapon=false;
+    this.angleswing=12;
+    this.swingframeconunt=0;
+    this.swinging=false;
     this.move = function () {
         
     }
@@ -345,42 +542,49 @@ tools.globalAlpha=1;
     var ct = Math.cos(this.direction.theta);
     var st = Math.sin(this.direction.theta);
     
-    function rotateCircle(px, py, radius) {
-        var rx = px*ct - py*st;
-        var ry = px*st + py*ct;
-        tools.arc(canvas.width/2+rx,canvas.height/2+ry, radius*canvas.width, 0,Math.PI*2);
-    }
+     function rotateCircle(px, py, radius) {
+            var rx = px*ct - py*st;
+            var ry = px*st + py*ct;
+            tools.arc(canvas.width/2+rx,canvas.height/2+ry, radius*canvas.width, 0,Math.PI*2);
+            return {x: canvas.width/2+rx, y: canvas.height/2+ry, r: radius*canvas.width}
+        }
     
     /* LEFT HAND */ 
-    tools.beginPath();
-    tools.lineWidth=2;
-    tools.strokeStyle = this.outlineColor;
-    tools.fillStyle = this.handcolor;
-    rotateCircle(-d, -b, this.handRadius);
-    tools.fill();
-    tools.stroke();
-    tools.closePath();
+        tools.beginPath();
+        tools.lineWidth=2;
+        tools.strokeStyle = this.outlineColor;
+        tools.fillStyle = "black";
+        this.leftHand = rotateCircle(-d, -b, this.handRadius);
+        tools.fill();
+        tools.stroke();
+        tools.closePath();
+        
+        /* RIGHT HAND */
+        tools.beginPath();
+        this.rightHand = rotateCircle(d, -b, this.handRadius);
+        tools.fill();
+        tools.stroke();
+        tools.closePath();
+        
+        /* BODY */
+        tools.fillStyle = "white";
+        tools.beginPath();
+        tools.arc(cx,cy, r, 0,Math.PI*2);
+        tools.fill();
+        tools.stroke();
+        tools.closePath();
+        
+		if(this.weapon) {
+			this.weapon.draw(this.leftHand.x,this.leftHand.y, this.leftHand.r, Math.PI + this.direction.theta+this.angleswing);
+		}
     
-    /* RIGHT HAND */
-    tools.beginPath();
-    rotateCircle(d, -b, this.handRadius);
-    tools.fill();
-    tools.stroke();
-    tools.closePath();
-    tools.fillStyle = this.color;
-    /* BODY */
-    tools.beginPath();
-    tools.arc(cx,cy, r, 0,Math.PI*2);
-    tools.fill();
-    tools.stroke();
-    tools.closePath();
 
 }
 }
-
 function doHitBoxesCollide(box1, box2) {
     // console.log("crate"+" x:"+box1.x+" y:"+box1.y+" width:"+box1.width+" height:"+box1.height);
     // console.log("panda"+" x:"+box2.x+" y:"+box2.y+" width:"+box2.width+" height:"+box2.height);
+    if(box1.width===0 || box2.width===0) return;
     if((box1.x + box1.width) < box2.x) {
         return false;
     }
@@ -404,8 +608,38 @@ function absdiff(x,y){
 }
 function animate() {
     tools.clearRect(0,0,canvas.width, canvas.height);
-
+    	
     resources.forEach(function(resource) {
+        
+        if(resource instanceof Weapon) return;
+        if(resource === panda){
+    
+            if(panda.swingframeconut>0){
+                
+            if(panda.swinging){
+                    if(panda.swingframeconut>6){
+                    panda.angleswing-=-0.25;
+                    }else{
+                        panda.angleswing-=0.25;
+                    }
+                    console.log(panda.angleswing)
+                //     if(panda.angleswing<16.2) {
+                //       console.log("panda4") 
+                //         panda.swingframecount=18;
+                //         panda.swinging=false;
+                //         panda.swingangle=0.1;
+                //     }
+                // }else{
+                //     console.log("panda!!!!!!!!PANDA!!!!!!!PANDA!!!! DAXSHOUNMAO")
+                //     console.log(panda.angleswing)
+                //     panda.swingangle=0.1;
+                // }
+                panda.swingframeconut--;
+            }
+            //panda.swingangle*=-1;
+            
+        }
+        };
         resource.move();
         resource.draw();
     });
@@ -441,22 +675,49 @@ function loadResources() {
     })
 
 }
-
 function changeDirection(key) {
 
     // CHALLENGE: WHAT DO WE MODIFY HERE TO MOVE THE WORLD?
-    if(key.keyCode === 37) {
+    if(key.keyCode === 37 || key.key === 'a') {
         // LEFT
-        gameWorld.velocity.x=gameWorld.speed;
+        gameWorld.velocity.x = gameWorld.speed;
     }
-    else if(key.keyCode === 38) {
-        gameWorld.velocity.y=gameWorld.speed;
+    else if(key.keyCode === 38 || key.key === 'w') {
+        // UP
+        gameWorld.velocity.y = gameWorld.speed;
     }
-    else if(key.keyCode === 39) {
-        gameWorld.velocity.x=-gameWorld.speed;
+    else if(key.keyCode === 39 || key.key === 'd') {
+        // RIGHT
+        gameWorld.velocity.x = -gameWorld.speed;
     }
-    else if(key.keyCode === 40) {
-        gameWorld.velocity.y=-gameWorld.speed;
+    else if(key.keyCode === 40  || key.key === 's')   {
+        // DOWN
+        gameWorld.velocity.y = -gameWorld.speed;
+    }
+    else if(key.keyCode===32){
+        console.log("panda")
+        panda.swingframeconut=12;
+        panda.swinging=true;
+    }else if(key.keyCode===49){
+        console.log("panda");
+        if(gottonweaponbamboo === true){
+            console.log("panda1");
+            panda.weapon=bamboo;
+        }else{
+            panda.weapon=false;
+        }
+    }
+    else if(key.keyCode===50){
+        console.log("panda2");
+        if(gottonweaponbamboogun === true){
+            console.log("panda3");
+            panda.weapon=bamboogun;
+        }else{
+            panda.weapon=false;
+        }
+    }
+    else if(key.key==="r"){
+        panda.weapon.load();
     }
 
 }
@@ -490,22 +751,21 @@ function moveCharacter(e) {
     gameWorld.velocity.y = gameWorld.speed*Math.cos(panda.direction.theta);  
 
 }
-function Score(x,y){
+function Score(x){
     this.x=x;
-    this.y=y;
+    
     this.number=100;
+    console.log(x)
     this.draw=function(){
         tools.globalAlpha=1;
         tools.font="30px Arial";
         tools.fillStyle="white";
-        tools.fillText(this.number,this.x,this.y)
+        tools.fillText(this.number,this.x,canvas.height-10)
     }
     this.move=function(){
         
     }
 }
-
-
 
 setInterval(function(){
     panda.color="rgb(255,255,255)"
@@ -548,12 +808,17 @@ setInterval(function(){
             }
             g=1;
 },200)
+function throwWeapon() {
+   if(!panda.weapon) return ;
+	panda.weapon.throw();
+}
+
 /* ADD EVENT LISTENERS HERE */
 window.addEventListener('resize', resizeCanvas);
 window.addEventListener('keydown', changeDirection);
 window.addEventListener('keyup', stopCharacter);
 window.addEventListener('mousemove', rotate);
-window.addEventListener('click', moveCharacter);
+window.addEventListener('click', throwWeapon);
 /* CODE TO RUN WHEN PAGE LOADS */
 resizeCanvas();
 loadResources();
